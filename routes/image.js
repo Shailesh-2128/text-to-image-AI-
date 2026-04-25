@@ -29,7 +29,7 @@ router.post('/generate-image', async (req, res) => {
 
   try {
     const response = await axios.post(
-      'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-2-1',
+      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
       { inputs: prompt },
       {
         headers: {
