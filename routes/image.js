@@ -29,7 +29,7 @@ router.post('/generate-image', async (req, res) => {
 
   try {
     const response = await axios.post(
-      'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0',
+      'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-2-1',
       { inputs: prompt },
       {
         headers: {
@@ -52,7 +52,13 @@ router.post('/generate-image', async (req, res) => {
 
     res.status(200).json({ image: imageUrl });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to generate image' });
+    console.error('Hugging Face image generation error:', error.response?.status, error.response?.data || error.message);
+    const message =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      'Failed to generate image';
+    res.status(500).json({ error: `Failed: ${message}` });
   }
 });
 
