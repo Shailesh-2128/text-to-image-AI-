@@ -28,20 +28,18 @@ router.post('/generate-image', async (req, res) => {
   }
 
   try {
-    const response = await axios.post(
-      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
-      { inputs: prompt },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.HF_API_KEY}`,
-          'Content-Type': 'application/json',
-          'Accept': 'image/jpeg'
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const { InferenceClient } = require("@huggingface/inference");
+    const client = new InferenceClient(process.env.HF_API_KEY);
 
-    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    const imageBlob = await client.textToImage({
+      provider: "fal-ai",
+      model: "baidu/ERNIE-Image",
+      inputs: prompt,
+      parameters: { num_inference_steps: 5 },
+    });
+
+    const arrayBuffer = await imageBlob.arrayBuffer();
+    const base64Image = Buffer.from(arrayBuffer).toString('base64');
     const imageUrl = `data:image/jpeg;base64,${base64Image}`;
 
     // If logged in, save to chat history and update counts
@@ -52,12 +50,8 @@ router.post('/generate-image', async (req, res) => {
 
     res.status(200).json({ image: imageUrl });
   } catch (error) {
-    console.error('Hugging Face image generation error:', error.response?.status, error.response?.data || error.message);
-    const message =
-      error.response?.data?.error ||
-      error.response?.data?.message ||
-      error.message ||
-      'Failed to generate image';
+    console.error('Hugging Face image generation error:', error);
+    const message = error.message || 'Failed to generate image';
     res.status(500).json({ error: `Failed: ${message}` });
   }
 });
